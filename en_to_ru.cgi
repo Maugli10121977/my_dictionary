@@ -64,7 +64,6 @@ def update_significance():
     u_dictionary = file_dictionary.cursor()
     for i in range(len(my_dictionary)):
         word_significance = c_sign.getfirst(f"id{i}")
-        print(f'<p>id{i} word_significance ==> {word_significance}</p>')
         if bool(my_dictionary[i][2]) != bool(word_significance):
             u_dictionary.execute("UPDATE dictionary SET significance=? WHERE en=?;", (bool(word_significance), my_dictionary[i][0]))
             file_dictionary.commit()
