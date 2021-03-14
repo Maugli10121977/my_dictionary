@@ -2,63 +2,89 @@
 
 import cgi
 import sqlite3
+import os
 
-print('Content-type: text/html')
-print('')
-print('''<!DOCTYPE html>
-<html>
-<head>
-<meta name="robots" content="noindex">
-<meta charset="utf-8">
-<title>EN_TO_RU</title>
-</head>
-<body>''')
+my_dictionary = []
+c = 'checked'
 
-print('''<form>
-<fieldset>
-<legend>Новое слово</legend>
-<input type="text" name="en_word" placeholder="English word:    "><br>
-<input type="text" name="ru_word" placeholder="Русское слово:    "><br>
-<input type="submit" value="Записать">
-</fieldset>
-</form>''')
-
-words = cgi.FieldStorage()
-en_word = words.getfirst("en_word")
-ru_word = words.getfirst("ru_word")
-
-file_dictionary = sqlite3.connect("en_to_ru.db")
-
-def write_dictionary(en_word, ru_word):
-    if en_word != None and ru_word != None:
-        w_dictionary = file_dictionary.cursor()
-        w_dictionary.execute("INSERT INTO dictionary (en, ru) VALUES (?, ?);", (en_word, ru_word))
-        file_dictionary.commit()
-        w_dictionary.close()
-        del w_dictionary
+file_dictionary = sqlite3.connect("en_to_ru.db") # ex.db для опытов
 
 def read_dictionary():
     r_dictionary = file_dictionary.cursor()
     my_dictionary = r_dictionary.execute("SELECT * FROM dictionary;").fetchall()
+    r_dictionary.close()
+    del r_dictionary
     return sorted(my_dictionary)
 
+my_dictionary = read_dictionary()
+
 en_words = []
-for i in range(len(read_dictionary())):
-    en_words.append(read_dictionary()[i][0])
+for i in range(len(my_dictionary)):
+    en_words.append(my_dictionary[i][0])
 
-if en_word not in en_words:
-    write_dictionary(en_word, ru_word)
+def read_current_address():
+    r_c_a = open('.current_address.txt','r')
+    current_address = r_c_a.read()
+    r_c_a.close()
+    del r_c_a
+    return current_address
 
-print('<form>')
-for i in range(len(read_dictionary())):
-    print(f'<p><input type="checkbox" name="id{i}"><strong>{read_dictionary()[i][0]}</strong> <em>{read_dictionary()[i][1]}</em></p>')
-print('</form')
+current_address = read_current_address()
 
-significance = cgi.FieldStorage()
-def replace_significance():
-    pass
+print('Content-type: text/html')
+print('')
+print(f'''<!DOCTYPE html>
+<html>
+<head>
+<meta name="robots" content="noindex">
+<meta charset="utf-8">
+<meta http-equiv="refresh" url="{current_address}">
+<title>EN_TO_RU</title>
+</head>
+<body>''')
+
+print('<p><a href="new_word.cgi">Новое слово</a></p>')
+
+print(f'''<form action="" method="get">
+<fieldset><legend>Словарь</legend>''')
+
+for i in range(len(my_dictionary)):
+    if bool(my_dictionary[i][2]) == bool('on'):
+        print(f'<p><input type="checkbox" {c} name="id{i}"><strong>{my_dictionary[i][0]}</strong> <em>{my_dictionary[i][1]}</em></p>')
+    else:
+        print(f'<p><input type="checkbox" name="id{i}"><strong>{my_dictionary[i][0]}</strong> <em>{my_dictionary[i][1]}</em></p>')
+
+print(f'<input type="submit" value="Изменить важность"><br>')
+print(f'''</fieldset>
+</form>''')
+
+c_sign = cgi.FieldStorage()
+
+def update_significance():
+    u_dictionary = file_dictionary.cursor()
+    for i in range(len(my_dictionary)):
+        word_significance = c_sign.getfirst(f"id{i}")
+        print(f'<p>id{i} word_significance ==> {word_significance}</p>')
+        if bool(my_dictionary[i][2]) != bool(word_significance):
+            u_dictionary.execute("UPDATE dictionary SET significance=? WHERE en=?;", (bool(word_significance), my_dictionary[i][0]))
+            file_dictionary.commit()
+    u_dictionary.close()
+    del u_dictionary
 
 print('<p>_________________________________________________</p>')
-print(f'<p>В словаре имеется {len(read_dictionary())} слов.</p>')
+print(f'<p>В словаре имеется {len(my_dictionary)} слов.</p>')
+print('<p></p>')
 
-print('''</body></html>''')
+def write_current_address():
+    w_c_a = open('.current_address.txt','w')
+    w_c_a.write(f'http://{os.environ["HTTP_HOST"]}{os.environ["SCRIPT_NAME"]}?{os.environ["QUERY_STRING"]}')
+    w_c_a.close()
+    del w_c_a
+
+if bool(os.environ["QUERY_STRING"]) == True: # Приделать сюда регулярку на соответствие 'id*' в os.environ["QUERY_STRING"], и вернуть форму с новым словом
+    update_significance()
+    write_current_address()
+
+print(f'''</body>
+</html>''')
+

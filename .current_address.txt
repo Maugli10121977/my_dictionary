@@ -1,0 +1,1 @@
+http://127.0.0.1:8000/cgi-bin/my_dictionary/en_to_ru.cgi?id0=on&id1=on&id2=on
