@@ -21,14 +21,14 @@ print('''<form action="" method="get">
 <fieldset><legend>Новое слово</legend>
 <input type="text" name="en_word" placeholder="English word:    "><br>
 <input type="text" name="ru_word" placeholder="Русское слово:    "><br><br>
-<input type="submit" value="Записать">
+<input type="checkbox" checked name="sign"> <input type="submit" value="Записать">
 </fieldset>
 </form>''')
 
 new_word = cgi.FieldStorage()
 en_word = new_word.getfirst("en_word")
 ru_word = new_word.getfirst("ru_word")
-significance_new_word = None
+significance_new_word = new_word.getfirst("sign")
 
 file_dictionary = sqlite3.connect("en_to_ru.db") # ex.db для опытов
 
