@@ -10,7 +10,7 @@ print('''<!DOCTYPE html>
 <head>
 <meta name="robots" content="noindex">
 <meta charset="utf-8">
-<title><NEW WORD</title>
+<title>NEW WORD</title>
 </head>
 <body>''')
 
